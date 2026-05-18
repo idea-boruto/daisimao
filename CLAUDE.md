@@ -2,6 +2,25 @@
 
 校园微任务撮合平台 MVP。学生发跑腿任务，其他学生接单完成，线下自行结算。
 
+## 当前进度（2026-05-18）
+
+| Feature | 状态 | 完成内容 |
+|---------|------|----------|
+| **F1 任务发布** | ✅ 完成 | TaskController + TaskService + ContentFilterService + 敏感词过滤 + Publish 页面 |
+| **F2 任务大厅与接单** | ✅ 完成 | GET /api/tasks 列表 + GET /api/tasks/{id} 详情 + PUT /api/tasks/{id}/accept 接单 + 乐观锁防抢 |
+| **F3 任务状态流转** | ⏳ 下一步 | 状态机操作（start/complete/confirm/cancel）+ 超时自动取消 |
+| F4 信用评价 | ⬜ 待开发 | 互评 + 信用分计算 + 冻结 |
+| F5 事件通知 | ⬜ 待开发 | Redis Stream 消费者 |
+
+**下次对话：从 F3 开始。** 相关代码：`TaskController.handleAction`（已有 accept，缺 start/complete/confirm/cancel）、`TaskDetail.tsx` 按钮已渲染但接口返回"不支持的操作"。
+
+### 环境注意事项
+
+- 系统默认 JDK 8，项目需要 JDK 17+
+- JDK 21 路径：`C:\Program Files\Java\新jdk-21`
+- 编译需指定：`JAVA_HOME="/c/Program Files/Java/新jdk-21" mvn compile`
+- dev 环境无需 MySQL/Redis 即可编译，但运行需要
+
 ## 项目结构
 
 ```
@@ -75,9 +94,11 @@ User 表关键字段：`username`(唯一), `nickname`, `campus`, `credit_score`,
 ## 开发命令
 
 ```bash
-# 后端
+# 后端（需要 JDK 17+，系统默认 JDK 8 需手动指定）
+export JAVA_HOME="/c/Program Files/Java/新jdk-21"
 cd server
-mvn spring-boot:run                    # 启动（dev 环境用 Mock SMS）
+mvn compile                            # 编译
+mvn spring-boot:run                    # 启动
 mvn test                               # 运行测试
 
 # 用户端 Web App
