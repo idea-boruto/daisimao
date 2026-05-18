@@ -1,0 +1,55 @@
+version: '3.8'
+services:
+  nginx:
+    image: nginx:1.24-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/ssl:/etc/nginx/ssl
+      - ./web-app/dist:/usr/share/nginx/html/app
+      - ./web-admin/dist:/usr/share/nginx/html/admin
+    depends_on:
+      - spring
+    restart: unless-stopped
+
+  spring:
+    build: ./server
+    container_name: daisimao-api
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - JWT_SECRET=${JWT_SECRET}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - SMS_ACCESS_KEY_ID=${SMS_ACCESS_KEY_ID}
+      - SMS_ACCESS_KEY_SECRET=${SMS_ACCESS_KEY_SECRET}
+    volumes:
+      - ./server/logs:/app/logs
+    depends_on:
+      - mysql
+      - redis
+    restart: unless-stopped
+
+  mysql:
+    image: mysql:8.0
+    container_name: daisimao-db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: daisimao
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./mysql/backup:/backup
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: daisimao-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+
+volumes:
+  mysql-data:
+  redis-data:
