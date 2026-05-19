@@ -26,3 +26,11 @@ jwt:
 logging:
   level:
     com.daisimao: DEBUG
+
+# 阿里云SMS配置（占位，生产环境需填写真实值）
+sms:
+  aliyun:
+    access-key-id: placeholder
+    access-key-secret: placeholder
+    sign-name: 代事猫
+    template-code: placeholder
