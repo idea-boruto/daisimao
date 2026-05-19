@@ -2,23 +2,16 @@ pipeline {
     agent any
 
     stages {
-        stage('部署到服务器') {
+        stage('拉取最新代码') {
             steps {
-                sshPublisher(
-                    publishers: [
-                        sshPublisherDesc(
-                            configName: 'target-server',
-                            transfers: [
-                                sshTransfer(
-                                    execCommand: '''
-                                        cd /www/dk_project/daisimao
-                                        chmod +x deploy.sh
-                                        bash deploy.sh
-                                    '''
-                                )
-                            ]
-                        )
-                    ]
+                echo '准备部署...'
+            }
+        }
+        stage('在服务器上执行部署') {
+            steps {
+                sshCommand(
+                    site: 'target-server',
+                    command: 'cd /www/dk_project/daisimao && bash deploy.sh'
                 )
             }
         }
