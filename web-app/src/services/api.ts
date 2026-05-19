@@ -22,7 +22,7 @@ api.interceptors.response.use(
       localStorage.removeItem('user');
       window.location.href = '/login';
     }
-    const msg = error.response?.data?.message || error.message || '请求失败';
+    const msg = error.response?.data?.error || error.response?.data?.message || error.message || '请求失败';
     return Promise.reject(new Error(msg));
   },
 );

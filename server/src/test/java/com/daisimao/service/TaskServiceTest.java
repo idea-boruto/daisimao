@@ -7,8 +7,10 @@ import com.daisimao.exception.BusinessException;
 import com.daisimao.model.dto.PageResponse;
 import com.daisimao.model.dto.TaskCreateRequest;
 import com.daisimao.model.dto.TaskResponse;
+import com.daisimao.model.entity.CreditLog;
 import com.daisimao.model.entity.Task;
 import com.daisimao.model.entity.User;
+import com.daisimao.repository.CreditLogRepository;
 import com.daisimao.repository.TaskRepository;
 import com.daisimao.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,6 +36,7 @@ class TaskServiceTest {
 
     @Mock TaskRepository taskRepository;
     @Mock UserRepository userRepository;
+    @Mock CreditLogRepository creditLogRepository;
     @Mock ContentFilterService contentFilterService;
     @Mock EventPublisher eventPublisher;
 
@@ -49,12 +52,16 @@ class TaskServiceTest {
         publisher.setId(1L);
         publisher.setNickname("小明");
         publisher.setCreditScore(100);
+        publisher.setCompletedOrders(0);
+        publisher.setCancelledOrders(0);
         publisher.setStatus(1);
 
         acceptor = new User();
         acceptor.setId(2L);
         acceptor.setNickname("小红");
         acceptor.setCreditScore(80);
+        acceptor.setCompletedOrders(0);
+        acceptor.setCancelledOrders(0);
         acceptor.setStatus(1);
 
         pendingTask = new Task();
@@ -221,6 +228,273 @@ class TaskServiceTest {
             when(taskRepository.updateById(any(Task.class))).thenReturn(0);
 
             assertThatThrownBy(() -> taskService.handleAction(10L, "accept", 2L))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("重试");
+        }
+    }
+
+    // ── startTask ──
+
+    @Nested
+    class StartTask {
+
+        @Test
+        void shouldStartTaskSuccessfully() {
+            pendingTask.setStatus(2);
+            pendingTask.setAcceptorId(2L);
+            when(taskRepository.selectById(10L)).thenReturn(pendingTask);
+            when(userRepository.selectById(1L)).thenReturn(publisher);
+            when(userRepository.selectById(2L)).thenReturn(acceptor);
+            when(taskRepository.updateById(any(Task.class))).thenReturn(1);
+
+            TaskResponse result = taskService.handleAction(10L, "start", 2L);
+
+            assertThat(result.getStatus()).isEqualTo(3);
+
+            ArgumentCaptor<Task> captor = ArgumentCaptor.forClass(Task.class);
+            verify(taskRepository).updateById(captor.capture());
+            assertThat(captor.getValue().getStatus()).isEqualTo(3);
+
+            verify(eventPublisher).publish(argThat(e -> "started".equals(e.getType())));
+        }
+
+        @Test
+        void shouldRejectNonAcceptedTask() {
+            pendingTask.setStatus(1);
+            when(taskRepository.selectById(10L)).thenReturn(pendingTask);
+
+            assertThatThrownBy(() -> taskService.handleAction(10L, "start", 2L))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("状态不正确");
+        }
+
+        @Test
+        void shouldRejectIfNotAcceptor() {
+            pendingTask.setStatus(2);
+            pendingTask.setAcceptorId(2L);
+            when(taskRepository.selectById(10L)).thenReturn(pendingTask);
+
+            assertThatThrownBy(() -> taskService.handleAction(10L, "start", 99L))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("只有接单人");
+        }
+
+        @Test
+        void shouldHandleOptimisticLockFailure() {
+            pendingTask.setStatus(2);
+            pendingTask.setAcceptorId(2L);
+            when(taskRepository.selectById(10L)).thenReturn(pendingTask);
+            when(taskRepository.updateById(any(Task.class))).thenReturn(0);
+
+            assertThatThrownBy(() -> taskService.handleAction(10L, "start", 2L))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("重试");
+        }
+    }
+
+    // ── completeTask ──
+
+    @Nested
+    class CompleteTask {
+
+        @Test
+        void shouldCompleteTaskSuccessfully() {
+            pendingTask.setStatus(3);
+            pendingTask.setAcceptorId(2L);
+            when(taskRepository.selectById(10L)).thenReturn(pendingTask);
+            when(userRepository.selectById(1L)).thenReturn(publisher);
+            when(userRepository.selectById(2L)).thenReturn(acceptor);
+            when(taskRepository.updateById(any(Task.class))).thenReturn(1);
+
+            TaskResponse result = taskService.handleAction(10L, "complete", 2L);
+
+            assertThat(result.getStatus()).isEqualTo(4);
+
+            ArgumentCaptor<Task> captor = ArgumentCaptor.forClass(Task.class);
+            verify(taskRepository).updateById(captor.capture());
+            assertThat(captor.getValue().getStatus()).isEqualTo(4);
+            assertThat(captor.getValue().getCompletedAt()).isNotNull();
+
+            verify(eventPublisher).publish(argThat(e -> "completed".equals(e.getType())));
+        }
+
+        @Test
+        void shouldRejectNonInProgressTask() {
+            pendingTask.setStatus(2);
+            when(taskRepository.selectById(10L)).thenReturn(pendingTask);
+
+            assertThatThrownBy(() -> taskService.handleAction(10L, "complete", 2L))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("状态不正确");
+        }
+
+        @Test
+        void shouldRejectIfNotAcceptor() {
+            pendingTask.setStatus(3);
+            pendingTask.setAcceptorId(2L);
+            when(taskRepository.selectById(10L)).thenReturn(pendingTask);
+
+            assertThatThrownBy(() -> taskService.handleAction(10L, "complete", 99L))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("只有接单人");
+        }
+
+        @Test
+        void shouldHandleOptimisticLockFailure() {
+            pendingTask.setStatus(3);
+            pendingTask.setAcceptorId(2L);
+            when(taskRepository.selectById(10L)).thenReturn(pendingTask);
+            when(taskRepository.updateById(any(Task.class))).thenReturn(0);
+
+            assertThatThrownBy(() -> taskService.handleAction(10L, "complete", 2L))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("重试");
+        }
+    }
+
+    // ── confirmTask ──
+
+    @Nested
+    class ConfirmTask {
+
+        @Test
+        void shouldConfirmTaskSuccessfully() {
+            pendingTask.setStatus(4);
+            when(taskRepository.selectById(10L)).thenReturn(pendingTask);
+            when(taskRepository.updateById(any(Task.class))).thenReturn(1);
+            when(userRepository.selectById(1L)).thenReturn(publisher);
+            when(userRepository.updateById(any(User.class))).thenReturn(1);
+
+            TaskResponse result = taskService.handleAction(10L, "confirm", 1L);
+
+            assertThat(result.getStatus()).isEqualTo(5);
+
+            verify(userRepository).updateById(argThat(u -> u.getCompletedOrders() == 1));
+            verify(eventPublisher).publish(argThat(e -> "confirmed".equals(e.getType())));
+        }
+
+        @Test
+        void shouldRejectNonPendingConfirmTask() {
+            pendingTask.setStatus(3);
+            when(taskRepository.selectById(10L)).thenReturn(pendingTask);
+
+            assertThatThrownBy(() -> taskService.handleAction(10L, "confirm", 1L))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("状态不正确");
+        }
+
+        @Test
+        void shouldRejectIfNotPublisher() {
+            pendingTask.setStatus(4);
+            when(taskRepository.selectById(10L)).thenReturn(pendingTask);
+
+            assertThatThrownBy(() -> taskService.handleAction(10L, "confirm", 99L))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("只有发单人");
+        }
+
+        @Test
+        void shouldHandleOptimisticLockFailure() {
+            pendingTask.setStatus(4);
+            when(taskRepository.selectById(10L)).thenReturn(pendingTask);
+            when(taskRepository.updateById(any(Task.class))).thenReturn(0);
+
+            assertThatThrownBy(() -> taskService.handleAction(10L, "confirm", 1L))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("重试");
+        }
+    }
+
+    // ── cancelTask ──
+
+    @Nested
+    class CancelTask {
+
+        @Test
+        void shouldPublisherCancelPendingNoPenalty() {
+            when(taskRepository.selectById(10L)).thenReturn(pendingTask);
+            when(userRepository.selectById(1L)).thenReturn(publisher);
+            when(taskRepository.updateById(any(Task.class))).thenReturn(1);
+
+            TaskResponse result = taskService.handleAction(10L, "cancel", 1L);
+
+            assertThat(result.getStatus()).isEqualTo(6);
+
+            ArgumentCaptor<Task> captor = ArgumentCaptor.forClass(Task.class);
+            verify(taskRepository).updateById(captor.capture());
+            assertThat(captor.getValue().getStatus()).isEqualTo(6);
+
+            verify(userRepository, never()).updateById(any(User.class));
+            verify(creditLogRepository, never()).insert(any());
+            verify(eventPublisher).publish(argThat(e -> "cancelled".equals(e.getType())));
+        }
+
+        @Test
+        void shouldPublisherCancelAcceptedWithPenalty() {
+            pendingTask.setStatus(2);
+            pendingTask.setAcceptorId(2L);
+            when(taskRepository.selectById(10L)).thenReturn(pendingTask);
+            when(userRepository.selectById(1L)).thenReturn(publisher);
+            when(taskRepository.updateById(any(Task.class))).thenReturn(1);
+            when(userRepository.updateById(any(User.class))).thenReturn(1);
+
+            taskService.handleAction(10L, "cancel", 1L);
+
+            verify(userRepository).updateById(argThat(u -> u.getCreditScore() == 97));
+
+            ArgumentCaptor<CreditLog> logCaptor = ArgumentCaptor.forClass(CreditLog.class);
+            verify(creditLogRepository).insert(logCaptor.capture());
+            assertThat(logCaptor.getValue().getChangeAmount()).isEqualTo(-3);
+            assertThat(logCaptor.getValue().getReason()).isEqualTo("取消任务");
+            assertThat(logCaptor.getValue().getRelatedTaskId()).isEqualTo(10L);
+        }
+
+        @Test
+        void shouldAcceptorCancelWithPenalty() {
+            pendingTask.setStatus(2);
+            pendingTask.setAcceptorId(2L);
+            when(taskRepository.selectById(10L)).thenReturn(pendingTask);
+            when(userRepository.selectById(2L)).thenReturn(acceptor);
+            when(taskRepository.updateById(any(Task.class))).thenReturn(1);
+            when(userRepository.updateById(any(User.class))).thenReturn(1);
+
+            taskService.handleAction(10L, "cancel", 2L);
+
+            verify(userRepository).updateById(argThat(u -> u.getCreditScore() == 75));
+
+            ArgumentCaptor<CreditLog> logCaptor = ArgumentCaptor.forClass(CreditLog.class);
+            verify(creditLogRepository).insert(logCaptor.capture());
+            assertThat(logCaptor.getValue().getChangeAmount()).isEqualTo(-5);
+        }
+
+        @Test
+        void shouldRejectCancelByUnrelatedUser() {
+            pendingTask.setAcceptorId(2L);
+            when(taskRepository.selectById(10L)).thenReturn(pendingTask);
+
+            assertThatThrownBy(() -> taskService.handleAction(10L, "cancel", 99L))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("无权取消");
+        }
+
+        @Test
+        void shouldRejectCancelCompletedTask() {
+            pendingTask.setStatus(5);
+            when(taskRepository.selectById(10L)).thenReturn(pendingTask);
+
+            assertThatThrownBy(() -> taskService.handleAction(10L, "cancel", 1L))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("不允许取消");
+        }
+
+        @Test
+        void shouldHandleOptimisticLockFailure() {
+            pendingTask.setAcceptorId(2L);
+            when(taskRepository.selectById(10L)).thenReturn(pendingTask);
+            when(userRepository.selectById(2L)).thenReturn(acceptor);
+            when(taskRepository.updateById(any(Task.class))).thenReturn(0);
+
+            assertThatThrownBy(() -> taskService.handleAction(10L, "cancel", 2L))
                     .isInstanceOf(BusinessException.class)
                     .hasMessageContaining("重试");
         }

@@ -21,16 +21,21 @@ public class EventPublisher {
     }
 
     public void publish(TaskEvent event) {
-        Map<String, String> fields = Map.of(
-                "taskId", event.getTaskId().toString(),
-                "type", event.getType(),
-                "timestamp", Instant.now().toString()
-        );
-        redisTemplate.opsForStream().add(
-                StreamRecords.newRecord()
-                        .in(STREAM_KEY)
-                        .ofMap(fields)
-        );
-        log.debug("Event published: {} -> {}", event.getType(), event.getTaskId());
+        try {
+            Map<String, String> fields = Map.of(
+                    "taskId", event.getTaskId().toString(),
+                    "type", event.getType(),
+                    "timestamp", Instant.now().toString()
+            );
+            redisTemplate.opsForStream().add(
+                    StreamRecords.newRecord()
+                            .in(STREAM_KEY)
+                            .ofMap(fields)
+            );
+            log.debug("Event published: {} -> {}", event.getType(), event.getTaskId());
+        } catch (Exception e) {
+            log.warn("Failed to publish event (Redis may be down): type={}, taskId={}, error={}",
+                    event.getType(), event.getTaskId(), e.getMessage());
+        }
     }
 }

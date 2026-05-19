@@ -27,6 +27,9 @@ public class User {
     private Integer role;
     private Integer status;
 
+    @Version
+    private Integer version;
+
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createdAt;
 
