@@ -33,6 +33,19 @@ export interface LoginResponse {
   isNewUser: boolean;
 }
 
+export interface Review {
+  id: number;
+  taskId: number;
+  reviewerId: number;
+  reviewerNickname: string;
+  targetId: number;
+  targetNickname: string;
+  rating: number;
+  tags?: string;
+  comment?: string;
+  createdAt: string;
+}
+
 export interface PageData<T> {
   items: T[];
   total: number;

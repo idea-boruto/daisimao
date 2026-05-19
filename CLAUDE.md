@@ -9,10 +9,10 @@
 | **F1 任务发布** | ✅ 完成 | TaskController + TaskService + ContentFilterService + 敏感词过滤 + Publish 页面 |
 | **F2 任务大厅与接单** | ✅ 完成 | GET /api/tasks 列表 + GET /api/tasks/{id} 详情 + PUT /api/tasks/{id}/accept 接单 + 乐观锁防抢 |
 | **F3 任务状态流转** | ✅ 完成 | start/complete/confirm/cancel + 取消扣分(发单-3/接单-5) + 超时自动释放(30min)+自动确认(24h) + EventPublisher 加固 |
-| F4 信用评价 | ⬜ 待开发 | 互评 + 信用分计算 + 冻结 |
+| **F4 信用评价** | ✅ 完成 | ReviewController + ReviewService + CreditService + 互评(发布人↔接单人) + 评分映射信用分(1★=-5~5★=+5) + 信用<30冻结 + TaskDetail 评价面板 |
 | F5 事件通知 | ⬜ 待开发 | Redis Stream 消费者 |
 
-**下次对话：从 F4 开始。** 关键文件：`TaskService.handleAction` 完整状态机、`TaskTimeoutScheduler` 定时任务、`TaskDetail.tsx` 按钮全部可用。
+**下次对话：从 F5 开始。**
 
 ### 环境注意事项
 

@@ -43,5 +43,9 @@ export function useAuth() {
     setUser(null);
   }, []);
 
-  return { token, user, isLoggedIn, login, logout };
+  const updateUser = useCallback((updates: Record<string, unknown>) => {
+    setUser((prev: Record<string, unknown> | null) => prev ? { ...prev, ...updates } : null);
+  }, []);
+
+  return { token, user, isLoggedIn, login, logout, updateUser };
 }

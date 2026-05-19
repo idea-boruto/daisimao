@@ -4,12 +4,13 @@ import { useAuth } from '../hooks/useAuth';
 import api from '../services/api';
 
 export default function Profile() {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
   const [nickname, setNickname] = useState(user?.nickname || '');
   const [campus, setCampus] = useState(user?.campus || '');
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
   const handleLogout = () => {
     logout();
@@ -18,11 +19,13 @@ export default function Profile() {
 
   const handleSave = async () => {
     setSaving(true);
+    setError('');
     try {
       await api.put('/user/profile', { nickname, campus });
+      updateUser({ nickname, campus });
       setEditing(false);
-    } catch {
-      // silent fail
+    } catch (e: any) {
+      setError(e.message);
     } finally {
       setSaving(false);
     }
@@ -39,6 +42,7 @@ export default function Profile() {
 
         {editing ? (
           <div className="space-y-3">
+            {error && <p className="text-danger text-xs">{error}</p>}
             <input
               type="text"
               value={nickname}

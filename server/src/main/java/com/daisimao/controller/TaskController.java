@@ -11,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/tasks")
 @RequiredArgsConstructor
@@ -25,6 +27,18 @@ public class TaskController {
         Long userId = (Long) auth.getPrincipal();
         TaskResponse response = taskService.createTask(userId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @GetMapping("/mine/published")
+    public ResponseEntity<List<TaskResponse>> getMyPublishedTasks(Authentication auth) {
+        Long userId = (Long) auth.getPrincipal();
+        return ResponseEntity.ok(taskService.getMyPublishedTasks(userId));
+    }
+
+    @GetMapping("/mine/accepted")
+    public ResponseEntity<List<TaskResponse>> getMyAcceptedTasks(Authentication auth) {
+        Long userId = (Long) auth.getPrincipal();
+        return ResponseEntity.ok(taskService.getMyAcceptedTasks(userId));
     }
 
     @GetMapping

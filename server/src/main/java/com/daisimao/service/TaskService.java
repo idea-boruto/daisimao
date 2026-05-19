@@ -100,6 +100,30 @@ public class TaskService {
         return new PageResponse<>(items, taskPage.getTotal(), page, size);
     }
 
+    public List<TaskResponse> getMyPublishedTasks(Long userId) {
+        List<Task> tasks = taskRepository.selectList(
+                new LambdaQueryWrapper<Task>()
+                        .eq(Task::getPublisherId, userId)
+                        .orderByDesc(Task::getCreatedAt));
+        Map<Long, User> userMap = loadUserMapFromTasks(tasks);
+        return tasks.stream()
+                .map(t -> TaskResponse.from(t, userMap.get(t.getPublisherId()),
+                        t.getAcceptorId() != null ? userMap.get(t.getAcceptorId()) : null))
+                .collect(Collectors.toList());
+    }
+
+    public List<TaskResponse> getMyAcceptedTasks(Long userId) {
+        List<Task> tasks = taskRepository.selectList(
+                new LambdaQueryWrapper<Task>()
+                        .eq(Task::getAcceptorId, userId)
+                        .orderByDesc(Task::getCreatedAt));
+        Map<Long, User> userMap = loadUserMapFromTasks(tasks);
+        return tasks.stream()
+                .map(t -> TaskResponse.from(t, userMap.get(t.getPublisherId()),
+                        t.getAcceptorId() != null ? userMap.get(t.getAcceptorId()) : null))
+                .collect(Collectors.toList());
+    }
+
     public TaskResponse getTask(Long taskId) {
         Task task = taskRepository.selectById(taskId);
         if (task == null) {
@@ -116,6 +140,19 @@ public class TaskService {
         }
         Set<Long> publisherIds = tasks.stream().map(Task::getPublisherId).collect(Collectors.toSet());
         return userRepository.selectBatchIds(publisherIds).stream()
+                .collect(Collectors.toMap(User::getId, Function.identity()));
+    }
+
+    private Map<Long, User> loadUserMapFromTasks(List<Task> tasks) {
+        if (tasks.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        Set<Long> ids = new HashSet<>();
+        for (Task t : tasks) {
+            ids.add(t.getPublisherId());
+            if (t.getAcceptorId() != null) ids.add(t.getAcceptorId());
+        }
+        return userRepository.selectBatchIds(ids).stream()
                 .collect(Collectors.toMap(User::getId, Function.identity()));
     }
 

@@ -1,5 +1,6 @@
 package com.daisimao.model.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -10,5 +11,7 @@ public class LoginResponse {
     private Long userId;
     private String username;
     private String nickname;
+
+    @JsonProperty("isNewUser")
     private boolean isNewUser;
 }

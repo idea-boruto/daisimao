@@ -33,15 +33,21 @@ public class TaskTimeoutScheduler {
         List<Task> expiredTasks = taskRepository.selectList(wrapper);
         if (expiredTasks.isEmpty()) return;
 
+        int released = 0;
         for (Task task : expiredTasks) {
             task.setStatus(1);
             task.setAcceptorId(null);
             task.setAcceptedAt(null);
-            taskRepository.updateById(task);
+            int updated = taskRepository.updateById(task);
+            if (updated == 0) {
+                log.error("Auto-release version conflict: task id={}", task.getId());
+                continue;
+            }
             eventPublisher.publish(new TaskEvent(task.getId(), "auto_released"));
             log.info("Auto-released task: id={}", task.getId());
+            released++;
         }
-        log.info("Auto-release processed {} tasks", expiredTasks.size());
+        log.info("Auto-release processed {}/{} tasks", released, expiredTasks.size());
     }
 
     @Transactional
@@ -55,12 +61,18 @@ public class TaskTimeoutScheduler {
         List<Task> expiredTasks = taskRepository.selectList(wrapper);
         if (expiredTasks.isEmpty()) return;
 
+        int confirmed = 0;
         for (Task task : expiredTasks) {
             task.setStatus(5);
-            taskRepository.updateById(task);
+            int updated = taskRepository.updateById(task);
+            if (updated == 0) {
+                log.error("Auto-confirm version conflict: task id={}", task.getId());
+                continue;
+            }
             eventPublisher.publish(new TaskEvent(task.getId(), "auto_confirmed"));
             log.info("Auto-confirmed task: id={}", task.getId());
+            confirmed++;
         }
-        log.info("Auto-confirm processed {} tasks", expiredTasks.size());
+        log.info("Auto-confirm processed {}/{} tasks", confirmed, expiredTasks.size());
     }
 }
