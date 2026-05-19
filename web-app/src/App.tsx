@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
-import BottomNav from './components/BottomNav';
+import TopNav from './components/TopNav';
 import Login from './pages/Login';
 import Home from './pages/Home';
 import Publish from './pages/Publish';
@@ -20,7 +20,8 @@ export default function App() {
   return (
     <BrowserRouter>
       <div className="min-h-screen bg-gray-50">
-        <div className="pb-16">
+        <TopNav />
+        <div className="max-w-4xl mx-auto px-6 py-6">
           <Routes>
             <Route path="/login" element={
               isLoggedIn ? <Navigate to="/" replace /> : <Login />
@@ -38,7 +39,6 @@ export default function App() {
             } />
           </Routes>
         </div>
-        {isLoggedIn && <BottomNav />}
       </div>
     </BrowserRouter>
   );

@@ -35,7 +35,7 @@ export default function MyTasks() {
   const tasks = tab === 'published' ? published : accepted;
 
   return (
-    <div className="max-w-lg mx-auto px-4 pt-4">
+    <div>
       <h1 className="text-lg font-bold mb-4">我的任务</h1>
 
       <div className="flex rounded-lg bg-gray-100 p-1 mb-4">

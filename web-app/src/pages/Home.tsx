@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import TaskCard from '../components/TaskCard';
+import { useAuth } from '../hooks/useAuth';
 import api from '../services/api';
 import type { Task } from '../types';
 
@@ -13,6 +15,8 @@ const typeOptions = [
 ];
 
 export default function Home() {
+  const { user, isLoggedIn } = useAuth();
+  const navigate = useNavigate();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [type, setType] = useState('');
   const [page, setPage] = useState(1);
@@ -53,10 +57,8 @@ export default function Home() {
   const hasMore = tasks.length < total;
 
   return (
-    <div className="max-w-lg mx-auto px-4 pt-4">
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-lg font-bold">任务大厅</h1>
-      </div>
+    <div>
+      <h1 className="text-lg font-bold mb-4">任务大厅</h1>
 
       <div className="flex gap-2 mb-4 overflow-x-auto pb-1 scrollbar-hide">
         {typeOptions.map((opt) => (

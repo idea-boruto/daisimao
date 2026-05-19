@@ -93,7 +93,7 @@ export default function TaskDetail() {
   };
 
   return (
-    <div className="max-w-lg mx-auto px-4 pt-4">
+    <div>
       <button
         onClick={() => navigate(-1)}
         className="text-gray-400 mb-4 flex items-center gap-1 text-sm"

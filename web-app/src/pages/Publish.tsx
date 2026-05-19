@@ -54,7 +54,7 @@ export default function Publish() {
   };
 
   return (
-    <div className="max-w-lg mx-auto px-4 pt-4">
+    <div>
       <h1 className="text-lg font-bold mb-4">发布任务</h1>
 
       <form onSubmit={handleSubmit} className="space-y-4">
