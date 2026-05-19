@@ -21,9 +21,12 @@ export default function Login() {
     setLoading(true);
     setError('');
     try {
+      console.log('[Login] calling login...');
       await login(name);
+      console.log('[Login] login done, navigating to /');
       navigate('/', { replace: true });
     } catch (e: any) {
+      console.error('[Login] error:', e);
       setError(e.message);
     } finally {
       setLoading(false);

@@ -1,5 +1,6 @@
 package com.daisimao.controller;
 
+import com.daisimao.exception.BusinessException;
 import com.daisimao.model.dto.LoginRequest;
 import com.daisimao.model.dto.LoginResponse;
 import com.daisimao.model.entity.User;
@@ -33,7 +34,7 @@ public class AuthController {
         }
 
         if (user.getStatus() == 0) {
-            throw new RuntimeException("账号已被冻结，请联系管理员");
+            throw new BusinessException(403, "账号已被冻结，请联系管理员");
         }
 
         String token = jwtTokenProvider.generateToken(user.getId(), user.getUsername());

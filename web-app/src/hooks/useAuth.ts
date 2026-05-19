@@ -29,12 +29,15 @@ export function useAuth() {
 
   const login = useCallback(async (username: string) => {
     const res = await api.post('/auth/login', { username }) as unknown as LoginResponse;
-    setToken(res.token);
-    setUser({
+    const userData = {
       userId: res.userId,
       username: res.username,
       nickname: res.nickname,
-    });
+    };
+    localStorage.setItem('token', res.token);
+    localStorage.setItem('user', JSON.stringify(userData));
+    setToken(res.token);
+    setUser(userData);
     return res;
   }, []);
 
@@ -43,5 +46,9 @@ export function useAuth() {
     setUser(null);
   }, []);
 
-  return { token, user, isLoggedIn, login, logout };
+  const updateUser = useCallback((updates: Record<string, unknown>) => {
+    setUser((prev: Record<string, unknown> | null) => prev ? { ...prev, ...updates } : null);
+  }, []);
+
+  return { token, user, isLoggedIn, login, logout, updateUser };
 }
