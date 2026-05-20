@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Layout as AntLayout, Menu, Button, theme } from 'antd';
 import {
@@ -23,6 +23,12 @@ export default function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { token } = theme.useToken();
+
+  useEffect(() => {
+    if (!localStorage.getItem('token')) {
+      navigate('/login', { replace: true });
+    }
+  }, [navigate]);
 
   const logout = () => {
     localStorage.removeItem('token');

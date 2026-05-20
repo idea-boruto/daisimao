@@ -17,7 +17,7 @@ export interface Task {
 
 export interface User {
   id: number;
-  openid: string;
+  username?: string;
   nickname?: string;
   avatarUrl?: string;
   realName?: string;

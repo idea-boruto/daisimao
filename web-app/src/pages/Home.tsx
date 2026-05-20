@@ -22,6 +22,7 @@ export default function Home() {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const fetchTasks = useCallback(async () => {
     setLoading(true);
@@ -39,7 +40,7 @@ export default function Home() {
       }
       setTotal(res.total);
     } catch {
-      // silent fail, empty list
+      setError('加载失败，请检查网络后重试');
     } finally {
       setLoading(false);
     }
@@ -76,7 +77,12 @@ export default function Home() {
         ))}
       </div>
 
-      {loading && tasks.length === 0 ? (
+      {error ? (
+        <div className="text-center py-16">
+          <p className="text-gray-500 mb-4">{error}</p>
+          <button onClick={fetchTasks} className="px-4 py-2 rounded bg-primary text-white text-sm">重试</button>
+        </div>
+      ) : loading && tasks.length === 0 ? (
         <div className="text-center py-16 text-gray-400">加载中...</div>
       ) : tasks.length === 0 ? (
         <div className="text-center py-16">

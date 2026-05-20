@@ -68,8 +68,13 @@ public class TaskService {
 
         if (request.getDeadline() != null && !request.getDeadline().isEmpty()) {
             try {
-                task.setDeadline(LocalDateTime.parse(request.getDeadline()));
+                LocalDateTime deadline = LocalDateTime.parse(request.getDeadline());
+                if (!deadline.isAfter(LocalDateTime.now())) {
+                    throw new BusinessException("截止时间必须是将来的时间");
+                }
+                task.setDeadline(deadline);
             } catch (Exception e) {
+                if (e instanceof BusinessException) throw (BusinessException) e;
                 throw new BusinessException("截止时间格式不正确");
             }
         }

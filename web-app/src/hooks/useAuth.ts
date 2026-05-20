@@ -5,8 +5,13 @@ import type { LoginResponse } from '../types';
 export function useAuth() {
   const [token, setToken] = useState(() => localStorage.getItem('token'));
   const [user, setUser] = useState(() => {
-    const raw = localStorage.getItem('user');
-    return raw ? JSON.parse(raw) : null;
+    try {
+      const raw = localStorage.getItem('user');
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      localStorage.removeItem('user');
+      return null;
+    }
   });
 
   const isLoggedIn = !!token;
@@ -33,6 +38,7 @@ export function useAuth() {
       userId: res.userId,
       username: res.username,
       nickname: res.nickname,
+      creditScore: res.creditScore ?? 100,
     };
     localStorage.setItem('token', res.token);
     localStorage.setItem('user', JSON.stringify(userData));

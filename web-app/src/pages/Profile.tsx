@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import api from '../services/api';
@@ -6,11 +6,18 @@ import api from '../services/api';
 export default function Profile() {
   const { user, logout, updateUser } = useAuth();
   const navigate = useNavigate();
+  const [creditScore, setCreditScore] = useState<number | null>(null);
   const [editing, setEditing] = useState(false);
   const [nickname, setNickname] = useState(user?.nickname || '');
   const [campus, setCampus] = useState(user?.campus || '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    api.get('/user/profile')
+      .then((res: any) => setCreditScore(res.creditScore))
+      .catch(() => setCreditScore(user?.creditScore ?? 100));
+  }, [user?.creditScore]);
 
   const handleLogout = () => {
     logout();
@@ -92,7 +99,7 @@ export default function Profile() {
       <div className="bg-white rounded-lg divide-y divide-gray-50">
         <div className="flex items-center justify-between px-4 py-3">
           <span className="text-sm text-gray-600">信用分</span>
-          <span className="text-warning font-bold">{user?.creditScore ?? 100}</span>
+          <span className="text-warning font-bold">{creditScore ?? user?.creditScore ?? 100}</span>
         </div>
         <div className="flex items-center justify-between px-4 py-3">
           <span className="text-sm text-gray-600">用户名</span>

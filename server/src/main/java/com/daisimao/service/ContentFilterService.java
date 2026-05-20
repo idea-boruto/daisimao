@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -17,9 +19,12 @@ public class ContentFilterService {
 
     @PostConstruct
     public void init() {
-        try (var reader = new BufferedReader(new InputStreamReader(
-                Objects.requireNonNull(getClass().getClassLoader().getResourceAsStream("sensitive-words.txt")),
-                StandardCharsets.UTF_8))) {
+        InputStream in = getClass().getClassLoader().getResourceAsStream("sensitive-words.txt");
+        if (in == null) {
+            log.error("sensitive-words.txt not found in classpath, filter disabled");
+            return;
+        }
+        try (var reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
             String line;
             int count = 0;
             while ((line = reader.readLine()) != null) {
@@ -30,8 +35,8 @@ public class ContentFilterService {
                 }
             }
             log.info("Sensitive word filter loaded {} words", count);
-        } catch (Exception e) {
-            log.warn("Failed to load sensitive-words.txt, filter disabled: {}", e.getMessage());
+        } catch (IOException e) {
+            log.error("Failed to read sensitive-words.txt: {}", e.getMessage());
         }
     }
 

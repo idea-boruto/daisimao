@@ -18,6 +18,22 @@ public class UserController {
 
     private final UserRepository userRepository;
 
+    @GetMapping("/profile")
+    public ResponseEntity<Map<String, Object>> getProfile(Authentication auth) {
+        Long userId = (Long) auth.getPrincipal();
+        User user = userRepository.selectById(userId);
+        if (user == null) {
+            throw new BusinessException(404, "用户不存在");
+        }
+        return ResponseEntity.ok(Map.of(
+                "userId", user.getId(),
+                "username", user.getUsername(),
+                "nickname", user.getNickname(),
+                "campus", user.getCampus() != null ? user.getCampus() : "",
+                "creditScore", user.getCreditScore()
+        ));
+    }
+
     @PutMapping("/profile")
     public ResponseEntity<Map<String, Object>> updateProfile(
             @RequestBody UpdateProfileRequest request,
@@ -33,7 +49,10 @@ public class UserController {
         if (request.getCampus() != null) {
             user.setCampus(request.getCampus().trim());
         }
-        userRepository.updateById(user);
+        int updated = userRepository.updateById(user);
+        if (updated == 0) {
+            throw new BusinessException("更新失败，请稍后重试");
+        }
         return ResponseEntity.ok(Map.of(
                 "userId", user.getId(),
                 "username", user.getUsername(),
