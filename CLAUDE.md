@@ -14,6 +14,29 @@
 
 **下次对话：从 F5 开始。**
 
+## 2026-05-19 变更总结
+
+### Bug 修复（8 个）
+- F3 遗留: #6 cancelTask PENDING 不计数、#7 User @Version 乐观锁、#15 @Transactional 自调用
+- F4 引入: #2 SecurityConfig wildcard `/**`→`/*` 防止匿名 /check 崩溃
+- 通用遗留: #1 Scheduler updateById 返回值检查、#4 MyTasks API 缺失、#5 PUT /user/profile 缺失、#6 异常不记日志、#7 RuntimeException→BusinessException(403)、#8 isNewUser @JsonProperty
+
+### 配置修复
+- `application.yml`: JWT secret 默认值改为 64 字符有效密钥
+- `spring.config.import: optional:classpath:application-secret.yml` — 敏感配置外置
+- `application-secret.yml` 已加入 .gitignore
+
+### 前端适配
+- BottomNav → TopNav: 顶部导航栏，PC 端友好
+- 页面 max-w-lg → max-w-4xl (896px)
+- 修复登录后 localStorage 写入时序导致 isLoggedIn 不生效
+
+### 关键文件
+- 后端 40+ Java 文件，前端 22+ TS/TSX 文件
+- 测试: 58 个，全部通过
+- 新增 UserController, ReviewController, CreditService, ReviewService
+- TopNav.tsx 替代 BottomNav.tsx
+
 ### 环境注意事项
 
 - 系统默认 JDK 8，项目需要 JDK 17+
