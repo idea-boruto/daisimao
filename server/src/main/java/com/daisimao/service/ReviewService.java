@@ -31,6 +31,7 @@ public class ReviewService {
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
     private final CreditService creditService;
+    private final NotificationService notificationService;
 
     @Transactional
     public ReviewResponse submitReview(Long reviewerId, ReviewRequest request) {
@@ -71,6 +72,11 @@ public class ReviewService {
         creditService.applyReviewScore(targetId, request.getRating(), request.getTaskId());
         log.info("Review submitted: taskId={}, reviewer={}, target={}, rating={}",
                 request.getTaskId(), reviewerId, targetId, request.getRating());
+
+        notificationService.createDirect(targetId, "review_new",
+                "你收到了新评价",
+                "有人评价了你的任务「" + task.getTitle() + "」",
+                request.getTaskId());
 
         User reviewer = userRepository.selectById(reviewerId);
         User target = userRepository.selectById(targetId);

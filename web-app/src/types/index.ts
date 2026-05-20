@@ -46,6 +46,16 @@ export interface Review {
   createdAt: string;
 }
 
+export interface Notification {
+  id: number;
+  type: string;
+  title: string;
+  content: string;
+  isRead: boolean;
+  relatedTaskId?: number;
+  createdAt: string;
+}
+
 export interface PageData<T> {
   items: T[];
   total: number;

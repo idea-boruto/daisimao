@@ -10,9 +10,45 @@
 | **F2 任务大厅与接单** | ✅ 完成 | GET /api/tasks 列表 + GET /api/tasks/{id} 详情 + PUT /api/tasks/{id}/accept 接单 + 乐观锁防抢 |
 | **F3 任务状态流转** | ✅ 完成 | start/complete/confirm/cancel + 取消扣分(发单-3/接单-5) + 超时自动释放(30min)+自动确认(24h) + EventPublisher 加固 |
 | **F4 信用评价** | ✅ 完成 | ReviewController + ReviewService + CreditService + 互评(发布人↔接单人) + 评分映射信用分(1★=-5~5★=+5) + 信用<30冻结 + TaskDetail 评价面板 |
-| F5 事件通知 | ⬜ 待开发 | Redis Stream 消费者 |
+| F5 事件通知 | ✅ 完成 | Redis Stream 消费者 + NotificationService + NotificationController + 前端通知页面 + 未读角标 + 10s 轮询 |
+| F6 | ⬜ 待定 | 微信小程序或管理后台功能扩展 |
 
-**下次对话：从 F5 开始。**
+**下次对话：F1-F5 全部完成，讨论下一步方向（微信小程序 / 管理后台 / 部署上线）。**
+
+## 2026-05-20 变更总结（F5 事件通知）
+
+### Feature 开发
+- **TaskEventConsumer** — @Scheduled(fixedDelay=1000) 轮询 Redis Stream `stream:task`，consumer group `notification-group`，批量10条，成功ACK/失败重试，Redis不可用容错
+- **NotificationService** — 事件→通知翻译（accepted→通知发布人，confirmed→通知接单人，cancelled/auto_confirmed→通知双方等），幂等（UNIQUE约束+catch DuplicateKeyException），markAsRead+getUnreadCount
+- **NotificationController** — GET /api/notifications + PUT /api/notifications/{id}/read + GET /api/notifications/unread-count
+- **ReviewService** — 注入NotificationService，提交评价后通知被评价人
+
+### 前端
+- **Notifications.tsx** — 通知列表页，未读蓝底加粗/已读白底灰字，点击标记已读+跳转任务详情
+- **TopNav.tsx** — "消息"链接+红色未读角标，登录后每10s轮询 /api/notifications/unread-count
+- **App.tsx** — `/notifications` 受保护路由
+
+### 新增文件（后端7个 + 前端1个）
+- `db/migration/V4__create_notification.sql`
+- `model/entity/Notification.java`
+- `repository/NotificationRepository.java`
+- `model/dto/NotificationResponse.java`
+- `service/NotificationService.java`
+- `event/TaskEventConsumer.java`
+- `controller/NotificationController.java`
+- `web-app/src/pages/Notifications.tsx`
+
+### 修改文件（5个）
+- `service/ReviewService.java` — 注入 NotificationService
+- `web-app/src/types/index.ts` — 新增 Notification interface
+- `web-app/src/components/TopNav.tsx` — 未读轮询+角标
+- `web-app/src/App.tsx` — /notifications 路由
+- `CLAUDE.md` — 进度更新
+
+### 测试
+- NotificationServiceTest: 19 个（CreateFromEvent 11 + MarkAsRead 4 + GetUserNotifications 2 + GetUnreadCount 2）
+- TaskEventConsumerTest: 4 个（ACK/失败不ACK/空批次/Redis容错）
+- 全部 81 测试通过
 
 ## 2026-05-19 变更总结
 

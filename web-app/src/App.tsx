@@ -7,6 +7,7 @@ import Publish from './pages/Publish';
 import TaskDetail from './pages/TaskDetail';
 import MyTasks from './pages/MyTasks';
 import Profile from './pages/Profile';
+import Notifications from './pages/Notifications';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isLoggedIn } = useAuth();
@@ -36,6 +37,9 @@ export default function App() {
             } />
             <Route path="/profile" element={
               <ProtectedRoute><Profile /></ProtectedRoute>
+            } />
+            <Route path="/notifications" element={
+              <ProtectedRoute><Notifications /></ProtectedRoute>
             } />
           </Routes>
         </div>

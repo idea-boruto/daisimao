@@ -34,6 +34,7 @@ class ReviewServiceTest {
     @Mock TaskRepository taskRepository;
     @Mock UserRepository userRepository;
     @Mock CreditService creditService;
+    @Mock NotificationService notificationService;
 
     @InjectMocks ReviewService reviewService;
 
@@ -92,6 +93,8 @@ class ReviewServiceTest {
             assertThat(result.getReviewerNickname()).isEqualTo("小明");
             assertThat(result.getTargetNickname()).isEqualTo("小红");
             verify(creditService).applyReviewScore(2L, 5, 10L);
+            verify(notificationService).createDirect(2L, "review_new",
+                    "你收到了新评价", "有人评价了你的任务「帮拿快递」", 10L);
         }
 
         @Test
@@ -107,6 +110,8 @@ class ReviewServiceTest {
 
             assertThat(result.getReviewerId()).isEqualTo(2L);
             assertThat(result.getTargetId()).isEqualTo(1L);
+            verify(notificationService).createDirect(1L, "review_new",
+                    "你收到了新评价", "有人评价了你的任务「帮拿快递」", 10L);
         }
 
         @Test
