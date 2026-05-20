@@ -1,0 +1,30 @@
+services:
+  spring:
+    image: daisimao:latest
+    container_name: daisimao-spring
+    networks:
+      - daisimao_net
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - DB_HOST=mysql_yinp-mysql_yinp-1
+      - DB_PORT=3306
+      - DB_USERNAME=root
+      - DB_PASSWORD=Ph4pW7rZNTYDtW8B
+      - REDIS_HOST=redis_p3ds-redis_P3ds-1
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=eJbBF5WrpcA3WdFW
+      - JWT_SECRET=jMY3P9YvK2nQ8xL5wR7tF6hB4cD1sA0eG3jL7kP9mN2rT8uV5wX0zA6bD4eF8gH
+    restart: unless-stopped
+
+  nginx:
+    image: daisimao-nginx:latest
+    container_name: daisimao-nginx
+    networks:
+      - daisimao_net
+    ports:
+      - "80:80"
+    restart: unless-stopped
+
+networks:
+  daisimao_net:
+    external: true
